@@ -1,0 +1,14 @@
+html
+  head
+    title signup
+  body
+    form(action='/signupSubmit', method='POST')
+      p
+        | Create User
+      p
+        input(type='text', name='name', value='', placeholder='name')
+      p
+        input(type='text', name='email', value='', placeholder='email')
+      p
+        input(type='text', name='password', value='', placeholder='password')
+      input(type='submit', value='Submit')
