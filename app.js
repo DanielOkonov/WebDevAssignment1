@@ -87,12 +87,7 @@ router.post("/loginSubmit", async function (req, res) {
     return;
   }
 
-  const client = new MongoClient(mongoConnectionUri);
-
-  await client.connect();
-  console.log("Connected successfully to mongodb");
-  const db = client.db(mongoDb);
-  const usersCollection = db.collection(mongoCollection);
+  const usersCollection = await connectToUsersCollection();
   const query = { _id: loginData.email };
   const userDocument = await usersCollection.findOne(query);
 
@@ -143,12 +138,7 @@ router.post("/signupSubmit", async function (req, res) {
   const salt = bcrypt.genSaltSync(saltRounds);
   const hashedPassword = bcrypt.hashSync(signupData.password, salt);
 
-  const client = new MongoClient(mongoConnectionUri);
-
-  await client.connect();
-  console.log("Connected successfully to mongodb");
-  const db = client.db(mongoDb);
-  const usersCollection = db.collection(mongoCollection);
+  const usersCollection = await connectToUsersCollection();
 
   try {
     await usersCollection.insertOne({
@@ -188,11 +178,7 @@ router.get("/logout", (req, res) => {
 });
 
 router.get("/admin", async function (req, res) {
-  const client = new MongoClient(mongoConnectionUri);
-  await client.connect();
-  console.log("Connected successfully to mongodb");
-  const db = client.db(mongoDb);
-  const usersCollection = db.collection(mongoCollection);
+  const usersCollection = await connectToUsersCollection();
   const projection = { _id: 1, username: 2 };
   const users = await usersCollection.find().project(projection).toArray();
   res.render("admin", { users: users });
