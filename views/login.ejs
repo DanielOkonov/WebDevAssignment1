@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<%- include('./templates/header', {title: 'login' }); %>
+
+
+
+    <main>
+        <div class="mt-4 p-3 bg-primary text-white rounded">
+            <h1>Login</h1>
+        </div>
+        <div style="margin-top: 40px;"></div>
+        <div>
+            <form action="/loginSubmit" method="post">
+                <input type="text" name="email" value="" placeholder="email" /></br>
+                <div style="margin-top: 20px;"></div>
+                <input type="text" name="password" value="" placeholder="password" /></br>
+                <div style="margin-top: 20px;"></div>
+                <input type="submit" value="Submit" />
+            </form>
+        </div>
+    </main>
+    </body>
+    <%- include('./templates/footer', {title: 'login' }); %>
+
+</html>

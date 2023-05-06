@@ -1,0 +1,20 @@
+<%- include('./templates/header', {title: 'admin_area' }); %>
+    <main>
+        <div class="mt-4 p-3 bg-primary text-white rounded">
+            <h3>Hello
+            </h3>
+        </div>
+        <div style="margin-top: 40px;"></div>
+        <div>
+            <ol>
+                <% let i=0; %>
+                    <% for(i=0; i < users.length; i++) { %>
+                        <%- include('templates/user', {user: users[i]}) %>
+                            <% } %>
+            </ol>
+        </div>
+    </main>
+    </body>
+    <%- include('./templates/footer'); %>
+
+        </html>

@@ -40,7 +40,7 @@ app.use(
   })
 );
 
-app.set("view engine", "pug");
+app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 router.get("/", (req, res) => {
@@ -175,7 +175,7 @@ router.post("/signupSubmit", async function (req, res) {
 
 router.get("/members", (req, res) => {
   if (!req.session.username) {
-    res.end("unauthorized");
+    res.redirect("/");
     return;
   }
   const imageFile = getRandomImageFile();
@@ -185,6 +185,17 @@ router.get("/members", (req, res) => {
 router.get("/logout", (req, res) => {
   req.session.destroy();
   res.redirect("/");
+});
+
+router.get("/admin", async function (req, res) {
+  const client = new MongoClient(mongoConnectionUri);
+  await client.connect();
+  console.log("Connected successfully to mongodb");
+  const db = client.db(mongoDb);
+  const usersCollection = db.collection(mongoCollection);
+  const projection = { _id: 1, username: 2 };
+  const users = await usersCollection.find().project(projection).toArray();
+  res.render("admin", { users: users });
 });
 
 router.get("*", (req, res) => {
@@ -202,4 +213,12 @@ console.log("Running at Port 3000");
 function getRandomImageFile() {
   const imageNum = 1 + Math.floor(Math.random() * 3);
   return `image_${imageNum}.jpg`;
+}
+
+async function connectToUsersCollection() {
+  const client = new MongoClient(mongoConnectionUri);
+  await client.connect();
+  console.log("Connected successfully to mongodb");
+  const db = client.db(mongoDb);
+  return db.collection(mongoCollection);
 }

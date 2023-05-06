@@ -1,0 +1,17 @@
+<%- include('./templates/header', {title: 'members_area' }); %>
+    <main>
+        <div class="mt-4 p-3 bg-primary text-white rounded">
+            <h3>Hello, <%= userName %>
+            </h3>
+        </div>
+        <div style="margin-top: 40px;"></div>
+        <div>
+            <img src="/images/<%= image  %>" /></br>
+            <div style="margin-top: 20px;"></div>
+            <a style="text-decoration: none;" class="mt-4 p-2 bg-primary text-white rounded" href="/logout">Logout</a>
+        </div>
+    </main>
+    </body>
+    <%- include('./templates/footer'); %>
+
+        </html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('./templates/header', {title: 'signup' }); %>
+        <title>signup</title>
+</head>
+
+<body class="container">
+
+    <main>
+        <div class="mt-4 p-5 bg-primary text-white rounded">
+            <h1>Create User</h1>
+        </div>
+        <div>
+            <form action="/signupSubmit" method="post">
+                <input type="text" name="name" value="" placeholder="name" /></br>
+                <input type="text" name="email" value="" placeholder="email" /></br>
+                <input type="text" name="password" value="" placeholder="password" /></br>
+                <input type="submit" value="Submit" />
+            </form>
+        </div>
+    </main>
+</body>
+
+</html>
