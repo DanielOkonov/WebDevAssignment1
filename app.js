@@ -44,7 +44,7 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 router.get("/", (req, res) => {
-  if (req.session.username) {
+  if (req.session.user) {
     res.setHeader("Content-Type", "text/html");
     res.write('<a href="/members">Go to Members Area</a><p>');
     res.write('<a href="/logout">Logout</a>');
@@ -102,7 +102,12 @@ router.post("/loginSubmit", async function (req, res) {
     return;
   }
 
-  req.session.username = userDocument.username;
+  req.session.user = {
+    email: userDocument._id,
+    name: userDocument.username,
+    type: userDocument.type,
+  };
+
   res.redirect("/members");
 });
 
@@ -165,17 +170,22 @@ router.post("/signupSubmit", async function (req, res) {
 
   console.log("Signup data inserted to Db");
 
-  req.session.username = req.body.name;
+  req.session.user = {
+    email: signupData.email,
+    name: signupData.name,
+    type: type,
+  };
+
   res.redirect("/members");
 });
 
 router.get("/members", (req, res) => {
-  if (!req.session.username) {
+  if (!req.session.user.name) {
     res.redirect("/");
     return;
   }
   const imageFile = getRandomImageFile();
-  res.render("members", { userName: req.session.username, image: imageFile });
+  res.render("members", { userName: req.session.user.name, image: imageFile });
 });
 
 router.get("/logout", (req, res) => {
@@ -188,6 +198,12 @@ router.get("/admin", async function (req, res) {
   const projection = { _id: 1, username: 2 };
   const users = await usersCollection.find().project(projection).toArray();
   res.render("admin", { users: users });
+});
+
+//TODO: remove.
+router.get("/checksession", (req, res) => {
+  const sessionData = req.session.user;
+  console.log("sessionData: " + JSON.stringify(sessionData));
 });
 
 router.get("*", (req, res) => {
