@@ -139,12 +139,18 @@ router.post("/signupSubmit", async function (req, res) {
   const hashedPassword = bcrypt.hashSync(signupData.password, salt);
 
   const usersCollection = await connectToUsersCollection();
+  let type = "user";
+
+  if ((await usersCollection.countDocuments()) === 0) {
+    type = "admin";
+  }
 
   try {
     await usersCollection.insertOne({
       _id: signupData.email,
       username: signupData.name,
       password: hashedPassword,
+      type: type,
     });
   } catch (e) {
     if (e.code === 11000) {
