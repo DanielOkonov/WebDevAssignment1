@@ -182,8 +182,7 @@ router.get("/members", (req, res) => {
     res.redirect("/");
     return;
   }
-  const imageFile = getRandomImageFile();
-  res.render("members", { userName: req.session.user.name, image: imageFile });
+  res.render("members", { userName: req.session.user.name });
 });
 
 router.get("/logout", (req, res) => {
@@ -262,11 +261,6 @@ app.use("/", router);
 app.listen(process.env.port || 3000);
 
 console.log("Running at Port 3000");
-
-function getRandomImageFile() {
-  const imageNum = 1 + Math.floor(Math.random() * 3);
-  return `image_${imageNum}.jpg`;
-}
 
 async function connectToUsersCollection() {
   const client = new MongoClient(mongoConnectionUri);
