@@ -1,17 +1,35 @@
 <%- include('./templates/header', {title: 'admin_area' }); %>
+
+    <script type="text/javascript" src="./scripts/promoteDemote.js"></script>
     <main>
         <div class="mt-4 p-3 bg-primary text-white rounded">
             <h3>Hello
             </h3>
         </div>
         <div style="margin-top: 40px;"></div>
-        <div>
-            <ol>
-                <% let i=0; %>
-                    <% for(i=0; i < users.length; i++) { %>
-                        <%- include('templates/user', {user: users[i]}) %>
-                            <% } %>
-            </ol>
+        <div class="container">
+            <% users.forEach(function(user) { %>
+                <div class="row">
+                    <div class="col">
+                        <%=user._id%>
+                    </div>
+                    <div class="col">
+                        <%=user.username%>
+                    </div>
+                    <div class="col">
+                        <%=user.type%>
+                    </div>
+                    <div class="col">
+                        <% if(user._id===currentUserEmail){ %>
+                            <p>current user</p>
+                            <% } else if(user.type==='admin' ){ %>
+                                <button type='button' onclick='demote("<%=user._id%>")'>Demote</button>
+                                <% } else{ %>
+                                    <button type='button' onclick='promote("<%=user._id%>")'>Promote</button>
+                                    <% } %>
+                    </div>
+                </div>
+                <% }); %>
         </div>
     </main>
     </body>

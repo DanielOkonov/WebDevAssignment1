@@ -25,7 +25,6 @@ const saltRounds = 10;
 
 const Joi = require("joi");
 
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(
@@ -45,18 +44,9 @@ app.set("views", path.join(__dirname, "views"));
 
 router.get("/", (req, res) => {
   if (req.session.user) {
-    res.setHeader("Content-Type", "text/html");
-    res.write('<a href="/members">Go to Members Area</a><p>');
-    res.write('<a href="/logout">Logout</a>');
-    res.end();
+    res.render("indexAuthenticated");
   } else {
-    res.setHeader("Content-Type", "text/html");
-    res.write(
-      '<link rel="stylsheet" type="text/css" href="/public/stylesheets/style.css">'
-    );
-    res.write('<a href="/signup">Signup</a><p>');
-    res.write('<a href="/login">Login</a>');
-    res.end();
+    res.render("index");
   }
 });
 
@@ -64,123 +54,131 @@ router.get("/login", (req, res) => {
   res.render("login");
 });
 
-router.post("/loginSubmit", async function (req, res) {
-  console.log("loginSubmit called with email: " + req.body.email);
+router.post(
+  "/loginSubmit",
+  bodyParser.urlencoded({ extended: false }),
+  async function (req, res) {
+    console.log("loginSubmit called with email: " + req.body.email);
 
-  const loginData = {
-    email: req.body.email,
-    password: req.body.password,
-  };
+    const loginData = {
+      email: req.body.email,
+      password: req.body.password,
+    };
 
-  const loginSchema = Joi.object({
-    email: Joi.string().min(3).required().email(),
-    password: Joi.string().min(3).required(),
-  });
+    const loginSchema = Joi.object({
+      email: Joi.string().min(3).required().email(),
+      password: Joi.string().min(3).required(),
+    });
 
-  const { error, value } = loginSchema.validate(loginData);
+    const { error, value } = loginSchema.validate(loginData);
 
-  if (error) {
-    res.setHeader("Content-Type", "text/html");
-    res.write(`<p>${error}<\p>`);
-    res.write('<a href="/login">Try again</a>');
-    res.end();
-    return;
+    if (error) {
+      res.setHeader("Content-Type", "text/html");
+      res.write(`<p>${error}<\p>`);
+      res.write('<a href="/login">Try again</a>');
+      res.end();
+      return;
+    }
+
+    const usersCollection = await connectToUsersCollection();
+    const query = { _id: loginData.email };
+    const userDocument = await usersCollection.findOne(query);
+
+    if (
+      !userDocument ||
+      !bcrypt.compareSync(loginData.password, userDocument.password)
+    ) {
+      res.setHeader("Content-Type", "text/html");
+      res.write("<p>Invalid email/password combination<p>");
+      res.write('<a href="/login">Try again</a>');
+      res.end();
+      return;
+    }
+
+    req.session.user = {
+      email: userDocument._id,
+      name: userDocument.username,
+      type: userDocument.type,
+    };
+
+    res.redirect("/members");
   }
-
-  const usersCollection = await connectToUsersCollection();
-  const query = { _id: loginData.email };
-  const userDocument = await usersCollection.findOne(query);
-
-  if (
-    !userDocument ||
-    !bcrypt.compareSync(loginData.password, userDocument.password)
-  ) {
-    res.setHeader("Content-Type", "text/html");
-    res.write("<p>Invalid email/password combination<p>");
-    res.write('<a href="/login">Try again</a>');
-    res.end();
-    return;
-  }
-
-  req.session.user = {
-    email: userDocument._id,
-    name: userDocument.username,
-    type: userDocument.type,
-  };
-
-  res.redirect("/members");
-});
+);
 
 router.get("/signup", (req, res) => {
   res.render("signup");
 });
 
-router.post("/signupSubmit", async function (req, res) {
-  console.log("signupSubmit called with name: " + req.body.name);
+router.post(
+  "/signupSubmit",
+  bodyParser.urlencoded({ extended: false }),
+  async function (req, res) {
+    console.log("signupSubmit called with name: " + req.body.name);
 
-  const signupData = {
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
-  };
+    const signupData = {
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+    };
 
-  const signupSchema = Joi.object({
-    name: Joi.string().min(1).required(),
-    email: Joi.string().min(3).required().email(),
-    password: Joi.string().min(3).required(),
-  });
-
-  const { error, value } = signupSchema.validate(signupData);
-
-  if (error) {
-    res.setHeader("Content-Type", "text/html");
-    res.write(`<p>${error}<\p>`);
-    res.write('<a href="/signup">Try again</a>');
-    res.end();
-    return;
-  }
-
-  const salt = bcrypt.genSaltSync(saltRounds);
-  const hashedPassword = bcrypt.hashSync(signupData.password, salt);
-
-  const usersCollection = await connectToUsersCollection();
-  let type = "user";
-
-  if ((await usersCollection.countDocuments()) === 0) {
-    type = "admin";
-  }
-
-  try {
-    await usersCollection.insertOne({
-      _id: signupData.email,
-      username: signupData.name,
-      password: hashedPassword,
-      type: type,
+    const signupSchema = Joi.object({
+      name: Joi.string().min(1).required(),
+      email: Joi.string().min(3).required().email(),
+      password: Joi.string().min(3).required(),
     });
-  } catch (e) {
-    if (e.code === 11000) {
+
+    const { error, value } = signupSchema.validate(signupData);
+
+    if (error) {
       res.setHeader("Content-Type", "text/html");
-      res.write(`<p>User with email ${signupData.email} already exists<\p>`);
+      res.write(`<p>${error}<\p>`);
       res.write('<a href="/signup">Try again</a>');
       res.end();
       return;
     }
-    throw e;
+
+    const salt = bcrypt.genSaltSync(saltRounds);
+    const hashedPassword = bcrypt.hashSync(signupData.password, salt);
+
+    const usersCollection = await connectToUsersCollection();
+    let type = "user";
+
+    if ((await usersCollection.countDocuments()) === 0) {
+      type = "admin";
+    }
+
+    try {
+      await usersCollection.insertOne({
+        _id: signupData.email,
+        username: signupData.name,
+        password: hashedPassword,
+        type: type,
+      });
+    } catch (e) {
+      if (e.code === 11000) {
+        res.setHeader("Content-Type", "text/html");
+        res.write(`<p>User with email ${signupData.email} already exists<\p>`);
+        res.write('<a href="/signup">Try again</a>');
+        res.end();
+        return;
+      }
+      throw e;
+    }
+
+    console.log("Signup data inserted to Db");
+
+    req.session.user = {
+      email: signupData.email,
+      name: signupData.name,
+      type: type,
+    };
+
+    res.redirect("/members");
   }
-
-  console.log("Signup data inserted to Db");
-
-  req.session.user = {
-    email: signupData.email,
-    name: signupData.name,
-    type: type,
-  };
-
-  res.redirect("/members");
-});
+);
 
 router.get("/members", (req, res) => {
-  if (!req.session.user.name) {
+  if (!req.session.user) {
     res.redirect("/");
     return;
   }
@@ -194,10 +192,57 @@ router.get("/logout", (req, res) => {
 });
 
 router.get("/admin", async function (req, res) {
+  if (!req.session.user) {
+    res.redirect("/");
+    return;
+  }
+
+  if (req.session.user.type !== "admin") {
+    res.status(403).send();
+    return;
+  }
+
   const usersCollection = await connectToUsersCollection();
-  const projection = { _id: 1, username: 2 };
+  const projection = { _id: 1, username: 2, type: 3 };
   const users = await usersCollection.find().project(projection).toArray();
-  res.render("admin", { users: users });
+  res.render("admin", {
+    users: users,
+    currentUserEmail: req.session.user.email,
+  });
+});
+
+router.post("/promoteUser", bodyParser.json(), async function (req, res) {
+  if (!req.session.user || req.session.user.type !== "admin") {
+    res.redirect("/");
+    return;
+  }
+
+  console.log(`promoteUser called with data: ${JSON.stringify(req.body)}`);
+
+  const query = { _id: req.body.userId };
+  const usersCollection = await connectToUsersCollection();
+  await usersCollection.updateOne(query, { $set: { type: "admin" } });
+
+  // usersCollection.updateOne(query, {$set: {type: 'admin'}})
+  // .then(result => res.redirect('/admin'))
+  // .catch(err => console.error(`Error occurred: ${err}`));
+
+  res.redirect("/admin");
+});
+
+router.post("/demoteUser", bodyParser.json(), async function (req, res) {
+  if (!req.session.user || req.session.user.type !== "admin") {
+    res.redirect("/");
+    return;
+  }
+
+  console.log(`demoteUser called with data: ${JSON.stringify(req.body)}`);
+
+  const query = { _id: req.body.userId };
+  const usersCollection = await connectToUsersCollection();
+  await usersCollection.updateOne(query, { $set: { type: "user" } });
+
+  res.redirect("/admin");
 });
 
 //TODO: remove.
