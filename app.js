@@ -143,6 +143,7 @@ router.post(
     const usersCollection = await connectToUsersCollection();
     let type = "user";
 
+    //Makes the first user an admin to have at least one admin when the database is empty.
     if ((await usersCollection.countDocuments()) === 0) {
       type = "admin";
     }
