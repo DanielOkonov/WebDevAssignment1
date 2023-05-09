@@ -252,10 +252,7 @@ router.get("/checksession", (req, res) => {
 });
 
 router.get("*", (req, res) => {
-  res.setHeader("Content-Type", "text/html");
-  res.write("<p>Page not found<p>");
-  res.statusCode = 404;
-  res.end();
+  res.render("404");
 });
 
 app.use("/", router);
